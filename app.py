@@ -11,16 +11,25 @@ from utils.motion_analysis import MotionAnalyzer
 from utils.decision_engine import DecisionEngine
 from utils.visualization import draw_flow, generate_motion_graph
 
-st.set_page_config(page_title="AegisVision AI", layout="wide", page_icon="🛡️")
+st.set_page_config(page_title="AegisVision AI", layout="wide")
 
-st.title("🛡️ AegisVision AI: Egocentric Fall Detection")
+hide_streamlit_style = """
+<style>
+#MainMenu {visibility: hidden;}
+header {visibility: hidden;}
+footer {visibility: hidden;}
+</style>
+"""
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
+st.title("AegisVision AI: Egocentric Fall Detection")
 st.markdown("Analyzing first-person video to detect probable falls using camera motion (Optical Flow).")
 
-with st.expander("ℹ️ How AegisVision AI Works", expanded=False):
+with st.expander("How AegisVision AI Works", expanded=False):
     st.markdown('''
     **1. Upload a Video:** Use the sidebar to upload a first-person video.
-    **2. Optical Flow Tracking:** The AI tracks the movement of pixels (green dots) to calculate camera speed.
-    **3. Decision Engine:** If it sees a massive speed spike, it marks a `Possible Fall`. It then waits 3 seconds. If you don't move, it triggers an `Emergency Alert`.
+    **2. Optical Flow Tracking:** The AI tracks the movement of pixels to calculate camera speed.
+    **3. Decision Engine:** If it sees a massive speed spike, it marks a `Possible Fall`. It then waits 3 seconds. If no movement is detected, it triggers an `Emergency Alert`.
     ''')
 
 
@@ -67,7 +76,7 @@ if uploaded_file is not None:
     
     video_path = tfile.name
     
-    if st.button("Start Analysis"):
+    if st.button("Start Analysis", type="primary", use_container_width=True):
         # Clear the initial info boxes
         video_placeholder.empty()
         status_placeholder.empty()
@@ -114,16 +123,16 @@ if uploaded_file is not None:
             
             # Update Status Card (Smart Explainable UI)
             if state == "Normal Activity":
-                status_html = "### ✅ Normal Activity\nWaiting for sudden motion events..."
+                status_html = "### Normal Activity\nWaiting for sudden motion events..."
                 status_placeholder.success(status_html)
             elif state == "Fall Detected":
-                status_html = "### ⚠️ Possible Fall Detected\n- 🚨 **Sudden Motion** (Spike above threshold)\n- ⏳ Analyzing post-fall movement..."
+                status_html = "### Possible Fall Detected\n- **Sudden Motion** (Spike above threshold)\n- Analyzing post-fall movement..."
                 status_placeholder.warning(status_html)
             elif state == "Emergency Alert":
-                status_html = "### 🚨 Emergency Assistance Recommended\n- 🚨 **Sudden Motion** (Fall detected)\n- 🛑 **Motion Stopped** (Post-fall motion extremely low)\n- ❌ **Recovery Not Detected**"
+                status_html = "### Emergency Assistance Recommended\n- **Sudden Motion** (Fall detected)\n- **Motion Stopped** (Post-fall motion extremely low)\n- **Recovery Not Detected**"
                 status_placeholder.error(status_html)
             elif state == "Recovered":
-                status_html = "### 🔄 User Recovered\n- 🚨 **Sudden Motion** (Fall detected)\n- 🏃 **Movement Resumed** (Post-fall motion is healthy)"
+                status_html = "### User Recovered\n- **Sudden Motion** (Fall detected)\n- **Movement Resumed** (Post-fall motion is healthy)"
                 status_placeholder.info(status_html)
             
             confidence_placeholder.progress(conf / 100.0)
