@@ -2,7 +2,7 @@
 **Egocentric Fall Detection & Emergency Alert System**
 
 ## Team Details
-* **Team Name:** Team Aegis
+* **Team Name:** Stack Attack
 * **Event:** HackZen 2026 Open Challenge
 
 ## Problem Statement
