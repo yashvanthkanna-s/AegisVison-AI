@@ -26,23 +26,24 @@ class MotionAnalyzer:
         is_sudden_motion = False
         is_downward_fall = False
         
-        if len(self.magnitudes) > self.fps // 2: # Wait for at least half a second of data
-            # Check if current magnitude is a spike compared to the mean of the history
-            historical_mean = np.mean(list(self.magnitudes)[:-1]) if len(self.magnitudes) > 1 else mag
+        if len(self.magnitudes) > self.fps // 2: 
+            # Get historical data excluding the current frame
+            recent_mags = list(self.magnitudes)[:-1]
+            historical_mean = float(np.mean(recent_mags))
+            historical_std = float(np.std(recent_mags))
             
-            # If current motion is significantly higher than historical and above absolute threshold
-            if mag > self.fall_magnitude_threshold and mag > historical_mean * 2.5:
+            # ADAPTIVE AI LOGIC: 
+            # A fall is a massive anomaly. We trigger if motion is 4 standard deviations 
+            # above the baseline, with a hard floor of 2.5 to prevent micro-jitters from triggering it.
+            adaptive_threshold = max(2.5, historical_mean + (4 * historical_std))
+            
+            if mag > adaptive_threshold:
                 is_sudden_motion = True
-                
-            # For egocentric falls, falling forward/down means visual field moves UP
-            # So y_movement (OpenCV y goes down) becomes negative. 
-            # Or if they fall backward, visual field moves DOWN (y_movement positive).
-            # We'll consider any intense Y-shift combined with magnitude spike as a potential fall.
-            if is_sudden_motion and abs(y_mov) > 2.0:
                 is_downward_fall = True
                 
         return {
             "is_sudden_motion": is_sudden_motion,
             "is_possible_fall": is_downward_fall,
-            "current_magnitude": mag
+            "current_magnitude": mag,
+            "baseline_mean": np.mean(self.magnitudes) if len(self.magnitudes) > 0 else 0
         }

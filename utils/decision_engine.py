@@ -28,6 +28,8 @@ class DecisionEngine:
                 self.frames_since_fall = 0
                 self.post_fall_magnitudes = []
                 self.confidence = 80 # High confidence a fall happened due to spike
+                # Capture their normal baseline right before the fall
+                self.pre_fall_baseline = motion_data.get('baseline_mean', 1.0)
                 
         elif self.state == "Fall Detected":
             self.frames_since_fall += 1
@@ -35,12 +37,13 @@ class DecisionEngine:
             
             # Wait for the recovery window to pass
             if self.frames_since_fall >= self.recovery_check_window:
-                # Only analyze the most recent 1 second of movement (ignore the initial fall spike itself)
                 recent_magnitudes = self.post_fall_magnitudes[-int(self.fps):]
                 avg_post_movement = sum(recent_magnitudes) / len(recent_magnitudes) if recent_magnitudes else 0
                 
-                # If there's almost no movement after a fall, it's an emergency
-                if avg_post_movement < getattr(self, 'emergency_threshold', 1.5):  # Threshold for "stillness"
+                # ADAPTIVE RECOVERY LOGIC:
+                # If their post-fall motion is extremely low (< 1.0) OR less than 40% of what 
+                # their normal activity was before the fall, they are not recovering.
+                if avg_post_movement < 1.0 or avg_post_movement < (self.pre_fall_baseline * 0.4):
                     self.state = "Emergency Alert"
                     self.confidence = 95
                 else:

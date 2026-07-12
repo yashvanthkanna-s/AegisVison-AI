@@ -114,7 +114,7 @@ streamlit run app.py
 ```
 
 Open the application in your browser.
-Upload a first-person video, adjust the motion threshold if required, and start the analysis.
+Upload a first-person video and click **Start Analysis**. The system's Adaptive AI will automatically calculate a Z-score baseline for the environment—no manual slider tuning required!
 
 The dashboard will display:
 * Motion graph

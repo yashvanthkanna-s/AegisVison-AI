@@ -25,31 +25,49 @@ footer {visibility: hidden;}
 """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
+header_html = """
+<div style="padding-top: 15px; margin-bottom: 25px;">
+    <h1 style="font-size: 3.5rem; font-weight: 800; margin-bottom: 0; line-height: 1.1;">
+        <span style="background: -webkit-linear-gradient(45deg, #00D2FF, #3A7BD5); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">AegisVision AI</span>
+        <br>
+        <span style="font-size: 2.0rem; color: #D0D0D0; font-weight: 500;">Egocentric Fall Detection</span>
+    </h1>
+    <p style="font-size: 1.2rem; color: #888888; margin-top: 10px;">
+        Analyzing first-person video to detect probable falls using <b>camera motion (Optical Flow)</b>.
+    </p>
+</div>
+"""
+
 if os.path.exists("logo.png"):
     col1, col2 = st.columns([1, 8])
     with col1:
-        st.image("logo.png", width=100)
+        st.image("logo.png", width=110)
     with col2:
-        st.title("AegisVision AI: Egocentric Fall Detection")
+        st.markdown(header_html, unsafe_allow_html=True)
 else:
-    st.title("AegisVision AI: Egocentric Fall Detection")
-    
-st.markdown("Analyzing first-person video to detect probable falls using camera motion (Optical Flow).")
+    st.markdown(header_html, unsafe_allow_html=True)
 
-with st.expander("How AegisVision AI Works", expanded=False):
+with st.expander("System Instructions", expanded=False):
     st.markdown('''
-    **1. Upload a Video:** Use the sidebar to upload a first-person video.
-    **2. Optical Flow Tracking:** The AI tracks the movement of pixels to calculate camera speed.
-    **3. Decision Engine:** If it sees a massive speed spike, it marks a `Possible Fall`. It then waits 3 seconds. If no movement is detected, it triggers an `Emergency Alert`.
+    Upload an egocentric video sequence below and initiate the analysis. 
+    
+    AegisVision AI will automatically process the optical flow motion vectors in real-time, providing a transparent and explainable assessment of the user's status.
     ''')
 
 
 # Sidebar for controls
-st.sidebar.header("Settings")
-st.sidebar.markdown("Use these sliders to tune the algorithms live.")
-fall_threshold = st.sidebar.slider("Motion Spike Threshold", min_value=1.0, max_value=20.0, value=8.0, step=0.5, help="Minimum sudden motion to trigger a fall.")
-recovery_time = st.sidebar.slider("Recovery Check Window (sec)", min_value=1, max_value=10, value=3, help="How long to wait after a fall before checking for recovery.")
-emergency_threshold = st.sidebar.slider("Emergency Motion Threshold", min_value=0.1, max_value=5.0, value=1.5, step=0.1, help="If post-fall motion is below this, trigger emergency.")
+st.sidebar.header("System Settings")
+st.sidebar.success("🧠 **Adaptive AI: Active**")
+st.sidebar.markdown('''
+AegisVision AI is currently running in fully adaptive mode. 
+
+It calculates a dynamic **Z-Score baseline** for the user's standard movement, meaning it automatically adjusts to different video environments without requiring manual slider tuning.
+''')
+
+# We no longer need the sliders, but we can pass default configs to the engine if it asks
+fall_threshold = None
+recovery_time = 3
+emergency_threshold = None
 
 
 uploaded_file = st.file_uploader("Upload an Egocentric Video (MP4, AVI, MOV)", type=['mp4', 'avi', 'mov'])
@@ -74,9 +92,9 @@ with col2:
     graph_placeholder = st.empty()
     graph_placeholder.info("Graph will appear during analysis.")
     
-    st.subheader("Event Timeline")
-    timeline_placeholder = st.empty()
-    timeline_placeholder.info("Events will be logged here.")
+    st.subheader("Analysis Summary")
+    summary_placeholder = st.empty()
+    summary_placeholder.info("Summary will be generated upon completion.")
 
 
 if uploaded_file is not None:
@@ -92,9 +110,8 @@ if uploaded_file is not None:
         video_placeholder.empty()
         status_placeholder.empty()
         graph_placeholder.empty()
-        timeline_placeholder.empty()
+        summary_placeholder.empty()
         
-
         # Initialize modules
         reader = VideoReader(video_path)
         info = reader.get_info()
@@ -108,7 +125,8 @@ if uploaded_file is not None:
         decision_engine.emergency_threshold = emergency_threshold
         
         all_magnitudes = []
-        timeline = []
+        has_fallen = False
+        has_emergency = False
         
         # Process video frame-by-frame
         for frame_idx, frame in enumerate(reader.read_frames()):
@@ -155,22 +173,26 @@ if uploaded_file is not None:
                 graph_placeholder.pyplot(fig)
                 plt.close(fig) # Prevent memory leak
                 
-            # Update Timeline if state changes significantly
-            time_sec = frame_idx / fps
-            time_str = time.strftime('%M:%S', time.gmtime(time_sec))
+            # Track states for final summary
+            if state == "Fall Detected":
+                has_fallen = True
+            elif state == "Emergency Alert":
+                has_emergency = True
+                
+            summary_placeholder.info("⏳ Analyzing video stream in real-time... generating final report.")
             
-            if motion_results['is_sudden_motion']:
-                timeline.append(f"{time_str} - Sudden Motion Detected (Mag: {flow_data['magnitude']:.1f})")
-            if state == "Emergency Alert" and f"{time_str} - Emergency Alert Triggered" not in timeline:
-                timeline.append(f"{time_str} - Emergency Alert Triggered")
+        # Generate Final Summary
+        if has_emergency:
+            final_summary = "**🚨 CRITICAL INCIDENT:** AegisVision AI detected a severe fall. The user exhibited zero recovery motion during the observation window, indicating potential unconsciousness or severe injury. **Immediate medical dispatch is recommended.**"
+            summary_placeholder.error(final_summary)
+        elif has_fallen:
+            final_summary = "**⚠️ MINOR INCIDENT:** AegisVision AI detected a sudden fall, but the user exhibited healthy movement shortly after. This was likely a trip or a soft fall. No emergency response is required at this time."
+            summary_placeholder.warning(final_summary)
+        else:
+            final_summary = "**✅ NO INCIDENTS:** The user maintained normal activity levels throughout the observation period. No sudden motion spikes or fall signatures were detected."
+            summary_placeholder.success(final_summary)
             
-            # Keep timeline concise
-            if len(timeline) > 5:
-                timeline = timeline[-5:]
-            
-            timeline_html = "<br>".join(timeline)
-            timeline_placeholder.markdown(f"```text\n{timeline_html}\n```")
-            
+        max_mag = max(all_magnitudes) if all_magnitudes else 0
         reader.release()
         os.unlink(video_path)
-        st.success("Analysis Complete!")
+        st.success(f"Analysis Complete! (Diagnostic Info: The peak motion spike during this video was {max_mag:.1f})")
