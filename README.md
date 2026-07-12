@@ -1,91 +1,141 @@
 # AegisVision AI
-
-## Project Title
-AegisVision AI - Egocentric Fall Detection System
+**Egocentric Fall Detection & Emergency Alert System**
 
 ## Team Details
-**Team Name:** Team Aegis
-**Event:** HackZen 2026 OPEN CHALLENGE
+* **Team Name:** Team Aegis
+* **Event:** HackZen 2026 Open Challenge
 
----
+## Problem Statement
+Falls are one of the leading causes of serious injuries among elderly people, especially those living alone. Most existing fall detection systems have some practical limitations.
 
-## 1. The Problem Statement
-Falls are a leading cause of injury for elderly individuals. When we looked at existing fall detection solutions, we noticed a few major flaws:
-* **CCTV Cameras:** They have blind spots, only work in specific rooms, and raise privacy concerns.
-* **Smartwatches/Wearables:** These rely heavily on accelerometers and are often forgotten on the nightstand or have dead batteries. 
+* **CCTV-based systems** only work where cameras are installed. They also have blind spots and raise privacy concerns.
+* **Smartwatches and wearable sensors** depend on batteries and are only useful if the person is actually wearing them.
 
-We realized there is a need for a portable, vision-based system that travels *with* the user. 
+We wanted to explore a different approach by using a first-person camera as the main source of information. Since the camera moves with the user, it can monitor falls in different environments without depending on fixed cameras.
 
-## 2. Objective
-Our goal for this 24-hour hackathon was to build a working prototype (MVP) that analyzes first-person (egocentric) video to not only detect if a fall has occurred, but to intelligently decide if the person actually needs emergency assistance.
+## Objective
+The goal of this project is to build a lightweight Computer Vision application that can analyze first-person (egocentric) videos and identify possible fall events.
 
-## 3. Our Approach & Proposed Solution
-Instead of relying on heavy, "black-box" deep learning models (like YOLO) which can be slow and hard to explain, we decided to use **the camera itself as the sensor**. 
+Instead of only detecting a fall, the system also checks whether the person gets back up or remains still before recommending an emergency response.
 
-We approached the solution by asking: *What does a fall look like from the first-person perspective?*
-When a person falls, the camera's view of the floor rushes upward rapidly. We realized we could track this massive shift in pixels using classical Computer Vision. 
+This project was developed as a Minimum Viable Product (MVP) for the HackZen 2026 Open Challenge.
 
-By analyzing the motion vectors of the video frame-by-frame, our system looks for a massive spike in movement. More importantly, we built a **Decision Engine** to prevent false alarms. If a fall is detected, the system waits 3 seconds. If the person gets back up, it marks them as "Recovered". If they lie completely still, it triggers an "Emergency Alert".
+## Our Approach
+We started by asking a simple question:
+*What does a fall look like from the person's own perspective?*
 
-## 4. Methodology / Model Architecture
-We broke the architecture down into modular steps:
-1. **Video Reader:** Extracts the video frame-by-frame for real-time processing.
-2. **Optical Flow (Farneback):** Calculates dense motion vectors across the entire screen. This gives us a raw "Motion Magnitude" score.
-3. **Motion Analyzer:** Maintains a rolling history of the user's movement speed. It flags sudden, intense spikes as potential falls.
-4. **Decision Engine:** A custom state machine that manages the logic:
-   - `Normal Activity`
-   - `Fall Detected` (Spike identified)
-   - `Recovered` (Motion resumes after the fall)
-   - `Emergency Alert` (Absolute stillness after the fall)
-5. **Dashboard:** A Streamlit web app that provides a live motion graph and explains the engine's real-time decisions to the caregiver.
+When someone wearing a body camera or smart glasses falls, the camera suddenly moves downward, rotates quickly, and often becomes still afterward.
 
-## 5. Technologies Used
-* **Language:** Python
-* **Frontend UI:** Streamlit
-* **Computer Vision:** OpenCV (cv2)
-* **Data Processing:** NumPy
-* **Visualization:** Matplotlib
+Instead of training a large deep learning model, we decided to use Optical Flow from OpenCV to measure camera movement between frames. This gives us an estimate of how much the camera is moving and whether that movement matches the pattern of a fall.
 
-## 6. Dataset
-* **Name:** EGOFALLS 
-* **Note:** To quickly test and tune our thresholds during the 24-hour hackathon, we used synthetic first-person video generations (walking, recovering, and emergency scenarios) inspired by the EGOFALLS dataset parameters.
+To reduce false alarms, we added a simple Decision Engine.
+* If movement resumes after a few seconds, the event is marked as **Recovered**.
+* If almost no movement is detected after the fall, the system recommends an **Emergency Alert**.
 
----
+This approach keeps the system lightweight, explainable, and suitable for running on a normal laptop.
 
-## 7. Installation & Setup Instructions
-1. Clone this repository:
-   ```bash
-   git clone https://github.com/yashvanthkanna-s/AegisVison-AI.git
-   cd AegisVision-AI
-   ```
-2. (Optional) Create a virtual environment:
-   ```bash
-   python -m venv venv
-   .\venv\Scripts\activate
-   ```
-3. Install the required libraries:
-   ```bash
-   pip install -r requirements.txt
-   ```
+## Methodology
+The project is divided into a few simple modules.
 
-## 8. Usage Instructions
-1. Start the application:
-   ```bash
-   streamlit run app.py
-   ```
-2. Open your browser to `http://localhost:8501`.
-3. Use the sidebar sliders to tune the AI's sensitivity (Motion Threshold, Recovery Time).
-4. Upload an egocentric `.mp4` video (you can use the test videos located in the `dataset/` folder).
-5. Click **Start Analysis** and watch the real-time motion graph and Decision Engine status board.
+* **Video Reader:** Reads the uploaded video frame by frame and passes it to the processing pipeline.
+* **Optical Flow:** Uses OpenCV's Farneback Optical Flow algorithm to calculate motion between consecutive frames and generate a motion score.
+* **Motion Analysis:** Tracks the motion score over time and looks for sudden spikes that may indicate a fall.
+* **Decision Engine:** The Decision Engine manages four possible states:
+  1. Normal Activity
+  2. Fall Detected
+  3. User Recovered
+  4. Emergency Alert Recommended
 
-## 9. Results and Outputs
-Our MVP successfully differentiates between normal walking, a recovered fall (e.g., tripping but standing back up), and a severe emergency fall (e.g., losing consciousness). Because it uses Optical Flow rather than heavy object detection, it runs very efficiently on standard CPUs without requiring expensive GPUs. The Streamlit dashboard successfully makes the AI's decision process completely transparent and explainable.
+  Instead of triggering an alert immediately, the system waits for a short period to check whether movement resumes.
 
-## 10. Future Scope
-* **Wearable Integration:** Deploying the code onto AR Smart Glasses or dedicated body-worn cameras.
-* **Edge Optimization:** Converting the Python logic into C++ to run entirely offline on low-power edge devices.
-* **Caregiver API:** Adding Twilio integration to automatically text a family member if the `Emergency Alert` state is triggered.
+* **Dashboard:** The application is built using Streamlit and provides a simple dashboard where users can:
+  * Upload a video
+  * View the processed output
+  * Monitor the motion graph
+  * See the current system status
+  * View the final recommendation
 
-## 11. References
-* EGOFALLS Dataset: Xueyi-Wang/EGOFALLS (GitHub)
-* OpenCV Optical Flow Documentation: docs.opencv.org
+## Technologies Used
+* Python
+* Streamlit
+* OpenCV
+* NumPy
+* Matplotlib
+
+## Dataset
+The project is designed for first-person (egocentric) videos.
+
+During development, we referred to the **EGOFALLS dataset** to understand the characteristics of egocentric fall scenarios.
+
+For this hackathon prototype, the system was tested using representative first-person videos that simulate:
+* Normal walking
+* Fall followed by recovery
+* Fall followed by no movement
+
+These videos helped us tune the motion thresholds and validate the workflow within the available hackathon time.
+
+## Installation
+Clone the repository.
+```bash
+git clone https://github.com/yashvanthkanna-s/AegisVison-AI.git
+cd AegisVision-AI
+```
+
+(Optional) Create a virtual environment.
+```bash
+python -m venv venv
+```
+
+Activate it.
+Windows:
+```powershell
+venv\Scripts\activate
+```
+
+Install the required packages.
+```bash
+pip install -r requirements.txt
+```
+
+## Running the Project
+Start the Streamlit application.
+```bash
+streamlit run app.py
+```
+
+Open the application in your browser.
+Upload a first-person video, adjust the motion threshold if required, and start the analysis.
+
+The dashboard will display:
+* Motion graph
+* Current activity status
+* Fall detection result
+* Recovery status
+* Emergency recommendation
+
+## Results
+The prototype was able to distinguish between different motion scenarios during testing.
+
+It correctly demonstrated:
+* Normal walking without unnecessary alerts
+* Fall followed by recovery
+* Fall followed by prolonged inactivity, resulting in an emergency recommendation
+
+Since the project mainly relies on Optical Flow instead of computationally heavy object detection models, it performs well on a standard CPU without requiring a dedicated GPU.
+
+The motion graph and status indicators also make the system's decision process easy to understand.
+
+## Future Scope
+There are several ways this project can be extended in the future.
+* Live webcam support
+* Smart glasses integration
+* Body-worn camera deployment
+* SMS or caregiver notifications
+* Edge-device optimization
+* Evaluation on larger real-world egocentric datasets
+
+## References
+* EGOFALLS Dataset
+* OpenCV Documentation
+* Streamlit Documentation
+* NumPy Documentation
