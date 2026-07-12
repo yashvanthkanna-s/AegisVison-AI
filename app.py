@@ -36,8 +36,9 @@ uploaded_file = st.file_uploader("Upload an Egocentric Video (MP4, AVI, MOV)", t
 
 if uploaded_file is not None:
     # Save uploaded file to a temporary location
-    tfile = tempfile.NamedTemporaryFile(delete=False) 
+    tfile = tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') 
     tfile.write(uploaded_file.read())
+    tfile.close() # CRITICAL FOR WINDOWS: Close the file handle before OpenCV opens it!
     
     video_path = tfile.name
     
