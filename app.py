@@ -11,7 +11,10 @@ from utils.motion_analysis import MotionAnalyzer
 from utils.decision_engine import DecisionEngine
 from utils.visualization import draw_flow, generate_motion_graph
 
-st.set_page_config(page_title="AegisVision AI", layout="wide")
+if os.path.exists("logo.png"):
+    st.set_page_config(page_title="AegisVision AI", layout="wide", page_icon="logo.png")
+else:
+    st.set_page_config(page_title="AegisVision AI", layout="wide")
 
 hide_streamlit_style = """
 <style>
@@ -22,7 +25,15 @@ footer {visibility: hidden;}
 """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
-st.title("AegisVision AI: Egocentric Fall Detection")
+if os.path.exists("logo.png"):
+    col1, col2 = st.columns([1, 8])
+    with col1:
+        st.image("logo.png", width=100)
+    with col2:
+        st.title("AegisVision AI: Egocentric Fall Detection")
+else:
+    st.title("AegisVision AI: Egocentric Fall Detection")
+    
 st.markdown("Analyzing first-person video to detect probable falls using camera motion (Optical Flow).")
 
 with st.expander("How AegisVision AI Works", expanded=False):
