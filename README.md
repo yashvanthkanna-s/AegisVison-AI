@@ -20,6 +20,16 @@ Instead of only detecting a fall, the system also checks whether the person gets
 
 This project was developed as a Minimum Viable Product (MVP) for the HackZen 2026 Open Challenge.
 
+## Example Scenario
+An elderly person named **Kumaran** is walking at home while wearing a body camera or smart glasses. He accidentally slips and falls.
+
+AegisVision AI detects the sudden camera movement and marks it as a **Possible Fall**. It then monitors the next few seconds.
+
+1. If **Kumaran** gets up and starts moving again, the system displays **"Fall Detected – User Recovered."**
+2. If **Kumaran** remains motionless, the system displays **"Emergency Alert Recommended."**
+
+This helps distinguish between a minor fall and a situation where immediate assistance may be needed.
+
 ## Our Approach
 We started by asking a simple question:
 *What does a fall look like from the person's own perspective?*
