@@ -34,6 +34,31 @@ emergency_threshold = st.sidebar.slider("Emergency Motion Threshold", min_value=
 
 uploaded_file = st.file_uploader("Upload an Egocentric Video (MP4, AVI, MOV)", type=['mp4', 'avi', 'mov'])
 
+st.write("---")
+
+# UI Layout (Always visible so the dashboard doesn't look empty)
+col1, col2 = st.columns([2, 1])
+
+with col1:
+    st.subheader("Video Analysis")
+    video_placeholder = st.empty()
+    video_placeholder.info("Upload a video and click 'Start Analysis' to view the camera feed.")
+    
+with col2:
+    st.subheader("Current Status")
+    status_placeholder = st.empty()
+    status_placeholder.info("Awaiting video feed...")
+    confidence_placeholder = st.empty()
+    
+    st.subheader("Motion Intensity")
+    graph_placeholder = st.empty()
+    graph_placeholder.info("Graph will appear during analysis.")
+    
+    st.subheader("Event Timeline")
+    timeline_placeholder = st.empty()
+    timeline_placeholder.info("Events will be logged here.")
+
+
 if uploaded_file is not None:
     # Save uploaded file to a temporary location
     tfile = tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') 
@@ -43,26 +68,13 @@ if uploaded_file is not None:
     video_path = tfile.name
     
     if st.button("Start Analysis"):
-        st.write("---")
+        # Clear the initial info boxes
+        video_placeholder.empty()
+        status_placeholder.empty()
+        graph_placeholder.empty()
+        timeline_placeholder.empty()
         
-        # UI Layout
-        col1, col2 = st.columns([2, 1])
-        
-        with col1:
-            st.subheader("Video Analysis")
-            video_placeholder = st.empty()
-            
-        with col2:
-            st.subheader("Current Status")
-            status_placeholder = st.empty()
-            confidence_placeholder = st.empty()
-            
-            st.subheader("Motion Intensity")
-            graph_placeholder = st.empty()
-            
-            st.subheader("Event Timeline")
-            timeline_placeholder = st.empty()
-            
+
         # Initialize modules
         reader = VideoReader(video_path)
         info = reader.get_info()
