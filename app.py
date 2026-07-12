@@ -16,6 +16,14 @@ st.set_page_config(page_title="AegisVision AI", layout="wide", page_icon="🛡�
 st.title("🛡️ AegisVision AI: Egocentric Fall Detection")
 st.markdown("Analyzing first-person video to detect probable falls using camera motion (Optical Flow).")
 
+with st.expander("ℹ️ How AegisVision AI Works", expanded=False):
+    st.markdown('''
+    **1. Upload a Video:** Use the sidebar to upload a first-person video.
+    **2. Optical Flow Tracking:** The AI tracks the movement of pixels (green dots) to calculate camera speed.
+    **3. Decision Engine:** If it sees a massive speed spike, it marks a `Possible Fall`. It then waits 3 seconds. If you don't move, it triggers an `Emergency Alert`.
+    ''')
+
+
 # Sidebar for controls
 st.sidebar.header("Settings")
 st.sidebar.markdown("Use these sliders to tune the algorithms live.")
@@ -94,18 +102,16 @@ if uploaded_file is not None:
             # Update Status Card (Smart Explainable UI)
             if state == "Normal Activity":
                 status_html = "### ✅ Normal Activity\nWaiting for sudden motion events..."
-                status_color = "green"
+                status_placeholder.success(status_html)
             elif state == "Fall Detected":
                 status_html = "### ⚠️ Possible Fall Detected\n- 🚨 **Sudden Motion** (Spike above threshold)\n- ⏳ Analyzing post-fall movement..."
-                status_color = "orange"
+                status_placeholder.warning(status_html)
             elif state == "Emergency Alert":
                 status_html = "### 🚨 Emergency Assistance Recommended\n- 🚨 **Sudden Motion** (Fall detected)\n- 🛑 **Motion Stopped** (Post-fall motion extremely low)\n- ❌ **Recovery Not Detected**"
-                status_color = "red"
+                status_placeholder.error(status_html)
             elif state == "Recovered":
                 status_html = "### 🔄 User Recovered\n- 🚨 **Sudden Motion** (Fall detected)\n- 🏃 **Movement Resumed** (Post-fall motion is healthy)"
-                status_color = "blue"
-                
-            status_placeholder.info(status_html)
+                status_placeholder.info(status_html)
             
             confidence_placeholder.progress(conf / 100.0)
             confidence_placeholder.caption(f"Confidence: {conf}%")
